@@ -1,17 +1,18 @@
 from fastapi import FastAPI
 from database import Base, engine
-from routers import userRouter, roleRouter, historyRouter
+from routers import userRouter, roleRouter, historyRouter, authRouter
 
-# Criar tabelas (em dev, usar Alembic em prod)
+# Criar tabelas
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Minha API", version="2.0.0")
+app = FastAPI(title="Riskvision", version="1.0.0")
 
 # Routers
+app.include_router(authRouter.router)
 app.include_router(userRouter.router)
 app.include_router(roleRouter.router)
 app.include_router(historyRouter.router)
 
 @app.get("/")
 def read_root():
-    return {"message": "API funcionando 🚀"}
+    return {"message": "API funcionando com JWT 🚀"}
