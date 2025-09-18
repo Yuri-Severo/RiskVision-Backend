@@ -1,0 +1,98 @@
+services:
+  db:
+    container_name: riskvision-db
+    image: bitnami/postgresql
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - riskvision-network
+    healthcheck:
+      # Verifica se o Postgres já está aceitando conexões
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    depends_on:
+      db:
+        condition: service_healthy
+    image: riskvision-api
+    container_name: riskvision-api
+    command: ["python3", "src/main.py"]
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3333:3333"
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - riskvision-network
+    healthcheck:
+      # Exponha um endpoint /health na API
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3333/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    container_name: riskvision-web
+    build:
+      context: ../Frontend-RiskVision
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # Se preferir, troque wget por curl se estiver disponível na imagem
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3333/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    environment:
+      - API_URL=http://backend:3333
+    networks:
+      - riskvision-network
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer-riskvision
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - riskvision-network
+
+volumes:
+  db:
+  portainer_data:
+
+networks:
+  riskvision-network:
+    driver: bridge
