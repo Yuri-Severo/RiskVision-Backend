@@ -22,12 +22,3 @@ def health():
 @app.get("/")
 def read_root():
     return {"message": "API funcionando com JWT 🚀"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "src.main:app",
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", "3333")),
-        reload=False
-    )
