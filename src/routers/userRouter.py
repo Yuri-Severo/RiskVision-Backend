@@ -16,6 +16,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == user.email).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
+    
+    if user.role_id is None:
+        user.role_id = 1  # Atribui o papel padrão "Usuário" se nenhum papel for fornecido
 
     hashed_pw = hash_password(user.password)
     new_user = User(
