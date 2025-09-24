@@ -1,34 +1,45 @@
 # syntax=docker/dockerfile:1.7
-FROM python:3.12-slim AS base
+FROM python:3.12-slim
 
-# Evita buffer no stdout/stderr e .pyc no container
+# Variáveis de ambiente para Python
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONIOENCODING=utf-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    DEBIAN_FRONTEND=noninteractive
 
-# Dependências de sistema (ex.: psycopg2, healthchecks com curl)
+# Instalar dependências do sistema
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
+# Criar diretório de trabalho
 WORKDIR /app
 
-# Instala dependências de Python com cache
-# (coloque seu requirements.txt na raiz do repo)
+# Copiar e instalar dependências Python
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copia o código (ajuste conforme sua estrutura)
-COPY src ./src
+# Copiar código fonte
+COPY src/ ./src/
 
-# Usuário não-root por segurança
-RUN useradd -m appuser && chown -R appuser:appuser /app
+# Criar usuário não-root
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
 USER appuser
 
-# Porta exposta pela API
+# Healthcheck interno
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:3333/health || exit 1
+
+# Expor porta
 EXPOSE 3333
 
-# Comando padrão (o docker-compose sobrescreve com `command`)
-CMD ["python", "src/main.py"]
+# Comando para iniciar a aplicação
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "3333", "--app-dir", "src", "--access-log"]
