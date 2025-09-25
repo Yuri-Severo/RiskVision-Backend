@@ -2,10 +2,12 @@ import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, Base, engine
 from models.userModel import User
 from models.roleModel import Role
 from utils.security import hash_password
+
+Base.metadata.create_all(bind=engine)
 
 def seed_roles(db: Session):
     roles = [{"id": 1, "description": "Admin"}, {"id": 2, "description": "Usuário"}]
