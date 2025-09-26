@@ -20,9 +20,9 @@ O sistema visa resolver o problema de **sobrecarga de informações** no mercado
 
 O projeto **RiskVision** é dividido em três repositórios:
 
-* [**Frontend-RiskVision**](#) - Frontend do sistema, construído com **React.js** ou **Next.js**.
-* [**RiskVision-Backend**](#) - Backend do sistema, construído com **FastAPI**, processando os dados e servindo a **API**.
-* [**Relatorio-Dados-RiskVision**](#) - Repositório para análise de dados e relatórios do projeto.
+* [**Frontend-RiskVision**](https://github.com/Edgar-Klewert/Frontend-RiskVision) - Frontend do sistema, construído com **Next.js**.
+* [**RiskVision-Backend**](https://github.com/Yuri-Severo/RiskVision-Backend) - Backend do sistema, construído com **FastAPI**, processando os dados e servindo a **API**.
+* [**Relatorio-Dados-RiskVision**](https://github.com/Edgar-Klewert/Relatorio-Dados-RiskVision) - Repositório para análise de dados e relatórios do projeto.
 
 ---
 
