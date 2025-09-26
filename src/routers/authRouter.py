@@ -5,16 +5,18 @@ from database import get_db
 from models.userModel import User
 from utils.security import verify_password
 from utils.jwtHandler import create_access_token
-from schemas.authSchema import TokenResponse
+from schemas.authSchema import LoginRequest, TokenResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
+# O OAuth2PasswordRequestForm é usado para receber dados de formulário, mas não permite que receba JSON diretamente. 
+
 @router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
+def login(login_data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == login_data.email).first()
+    if not user or not verify_password(login_data.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciais inválidas")
 
     access_token = create_access_token({"sub": str(user.id)})
