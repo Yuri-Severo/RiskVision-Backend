@@ -10,6 +10,7 @@ class HistoryBase(BaseModel):
     volume: int
     dividends: float
     stock_splits: float
+    date: datetime
 
 class HistoryCreate(HistoryBase):
     pass
