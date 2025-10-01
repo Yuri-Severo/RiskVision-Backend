@@ -13,13 +13,12 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
 
-    # Validação da senha guga
     if not validate_password(user.password):
         raise HTTPException(
             status_code=400,
             detail="A senha deve ter no mínimo 6 caracteres, incluindo pelo menos uma letra maiúscula e uma minúscula",
         )
-
+    #Caso o role_id não seja fornecido, atribui o papel padrão "Usuário" (id=2)
     if user.role_id is None:
         user.role_id = 2
 
