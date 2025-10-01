@@ -14,4 +14,5 @@ class History(Base):
     volume = Column(Integer, nullable=False)
     dividends = Column(Float, nullable=False)  
     stock_splits = Column(Float, nullable=False)
+    date = Column(DateTime, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
