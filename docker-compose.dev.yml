@@ -61,7 +61,7 @@ services:
   frontend:
     container_name: riskvision-web
     build:
-      context: ../riskvision-web
+      context: ../Frontend-RiskVision
       dockerfile: Dockerfile
     restart: always
     ports:
