@@ -1,0 +1,105 @@
+services:
+  db:
+    container_name: riskvision-db
+    image: bitnami/postgresql
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db:/var/lib/postgresql/data
+    networks:
+      - riskvision-network
+    healthcheck:
+      # Verifica se o Postgres já está aceitando conexões
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h 127.0.0.1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  backend:
+    container_name: riskvision-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3333:3333"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "python -m src.seeders.mock_data && uvicorn main:app --host 0.0.0.0 --port 3333 --app-dir src"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PYTHONIOENCODING: utf-8
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+    networks:
+      - riskvision-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3333/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    container_name: riskvision-web
+    build:
+      context: ../Frontend-RiskVision
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      # Se preferir, troque wget por curl se estiver disponível na imagem
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 25s
+    environment:
+      - API_URL=http://backend:3333
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://backend:3333
+      - JWT_SECRET=mysecret
+    networks:
+      - riskvision-network
+
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer-riskvision
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - riskvision-network
+
+volumes:
+  db:
+  portainer_data:
+
+networks:
+  riskvision-network:
+    driver: bridge
