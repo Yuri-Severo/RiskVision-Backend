@@ -214,4 +214,3 @@ JWT_SECRET=<seu_segredo>
 
 Sinta-se à vontade para fazer um fork deste repositório e contribuir com melhorias. Para qualquer alteração, por favor, crie um **pull request**.
 
----
