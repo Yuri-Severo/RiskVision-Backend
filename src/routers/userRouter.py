@@ -22,7 +22,7 @@ def change_password(request: RecoverPasswordRequest, db: Session = Depends(get_d
     if not validate_password(request.new_password):
         raise HTTPException(
             status_code=400,
-            detail="A nova senha deve ter no mínimo 6 caracteres, incluindo pelo menos uma letra maiúscula e uma minúscula",
+            detail="A nova senha deve ter no mínimo 6 caracteres, incluindo pelo menos uma letra maiúscula, uma letra minúscula e um número",
         )
     if verify_password(request.new_password, user.password):
         raise HTTPException(
