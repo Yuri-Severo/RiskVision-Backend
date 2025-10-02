@@ -11,8 +11,8 @@ router = APIRouter(prefix="/users", tags=["Users"])
 def get_users(db: Session = Depends(get_db)):
     return db.query(User).all()
 
-@router.put("/recover-password")
-def recover_password(request: RecoverPasswordRequest, db: Session = Depends(get_db)):
+@router.put("/change-password")
+def change_password(request: RecoverPasswordRequest, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.email == request.email).first()
 
