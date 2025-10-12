@@ -7,10 +7,10 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
+    role = Column(String, nullable=False)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=False), server_default=func.now())
 
     role = relationship("Role", back_populates="users")
