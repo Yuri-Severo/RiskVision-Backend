@@ -58,7 +58,7 @@ def update_user(user_id: int, user_data: UserBase, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     user.name = user_data.name
     user.email = user_data.email
-    user.role_id = user_data.role_id
+    user.role = user_data.role
     db.commit()
     db.refresh(user)
     return user
