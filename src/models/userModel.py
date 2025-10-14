@@ -11,6 +11,4 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    created_at = Column(DateTime(timezone=False), server_default=func.now())
-
-    role = relationship("Role", back_populates="users")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
