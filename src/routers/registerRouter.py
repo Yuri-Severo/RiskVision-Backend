@@ -18,13 +18,14 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
             status_code=400,
             detail="A senha deve ter no mínimo 6 caracteres, incluindo pelo menos uma letra maiúscula e uma minúscula",
         )
-    #Caso o role_id não seja fornecido, atribui o papel padrão "Usuário" (id=2)
-    if user.role_id is None:
-        user.role_id = 2
+    # Caso a role não seja fornecida, atribui o papel padrão "user"
+    role = getattr(user, 'role', 'user')
+    if not role:
+        role = 'user'
 
     hashed_pw = hash_password(user.password)
     new_user = User(
-        name=user.name, email=user.email, password=hashed_pw, role_id=user.role_id
+        name=user.name, email=user.email, password=hashed_pw, role=role
     )
     db.add(new_user)
     db.commit()
