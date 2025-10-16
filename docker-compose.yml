@@ -1,6 +1,6 @@
 services:
   backend:
-    container_name: riskvision-api
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -39,7 +39,7 @@ services:
       start_period: 40s
 
   frontend:
-    container_name: riskvision-web
+    container_name: web
     build:
       context: ../Frontend-RiskVision
       dockerfile: Dockerfile
@@ -58,7 +58,7 @@ services:
       start_period: 25s
     environment:
       - API_URL=http://backend:3333
-      - NODE_ENV=development
+      - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=http://backend:3333
       - JWT_SECRET=${JWT_SECRET}
     networks:
@@ -66,7 +66,7 @@ services:
 
   portainer:
     image: portainer/portainer-ce
-    container_name: portainer-riskvision
+    container_name: portainer
     restart: unless-stopped
     ports:
       - "9000:9000"
