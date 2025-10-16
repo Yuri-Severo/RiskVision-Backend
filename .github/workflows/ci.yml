@@ -1,0 +1,48 @@
+name: Continuous Integration
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+            - develop
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                python-version:
+                    ["pypy3.10", "3.9", "3.10", "3.11", "3.12", "3.13"]
+
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up Python ${{ matrix.python-version }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python-version }}
+
+            - name: Display Python version
+              run: python -c "import sys; print(sys.version)"
+
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+                  pip install pylint
+
+            - name: Lint with pylint
+              run: |
+                  echo "Running pylint checks on the project..."
+                  pylint src/ --rcfile=.pylintrc --output-format=text --reports=yes --exit-zero
+              continue-on-error: false
+
+            - name: Lint specific directories
+              run: |
+                  echo "Checking individual modules for lint compliance..."
+                  pylint src/models/ --rcfile=.pylintrc --disable=missing-docstring || true
+                  pylint src/routers/ --rcfile=.pylintrc --disable=missing-docstring || true
+                  pylint src/schemas/ --rcfile=.pylintrc --disable=missing-docstring || true
+                  pylint src/utils/ --rcfile=.pylintrc --disable=missing-docstring || true
