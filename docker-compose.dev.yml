@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: riskvision-db
+    container_name: db
     image: bitnami/postgresql
     restart: always
     ports:
@@ -26,7 +26,7 @@ services:
       start_period: 10s
 
   backend:
-    container_name: riskvision-api
+    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
@@ -59,7 +59,7 @@ services:
       start_period: 40s
 
   frontend:
-    container_name: riskvision-web
+    container_name: web
     build:
       context: ../Frontend-RiskVision
       dockerfile: Dockerfile
@@ -86,7 +86,7 @@ services:
 
   portainer:
     image: portainer/portainer-ce
-    container_name: portainer-riskvision
+    container_name: portainer
     restart: unless-stopped
     ports:
       - "9000:9000"
