@@ -4,14 +4,15 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from sqlalchemy.orm import Session
 from database import get_db, Base, engine
 from models.userModel import User
+from schemas.userSchema import UserRole
 from utils.security import hash_password
 
 Base.metadata.create_all(bind=engine)
 
 def seed_users(db: Session):
     users = [
-        {"name": "Admin Teste", "email": "admin@test.com", "password": "Admin123!", "role": "admin"},
-        {"name": "User Teste", "email": "user@test.com", "password": "User123!", "role": "user"}
+        {"name": "Admin Teste", "email": "admin@test.com", "password": "Admin123!", "role": UserRole.ADMIN},
+        {"name": "User Teste", "email": "user@test.com", "password": "User123!", "role": UserRole.USER}
     ]
     for u in users:
         existing_user = db.query(User).filter_by(email=u["email"]).first()
