@@ -16,7 +16,7 @@ class HistoryCreate(HistoryBase):
     pass
 
 class HistoryResponse(HistoryBase):
-    id: str
+    id: int
     created_at: datetime
 
     class Config:
