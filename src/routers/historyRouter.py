@@ -1,57 +1,73 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
 from typing import Optional
 from database import get_db
 from models.historyModel import History
 from schemas.historySchema import HistoryCreate, HistoryResponse, HistoryBase
+from integrations.market_data.yfinance_client import get_yfinance_client
+from core.config import TICKER
 
 router = APIRouter(prefix="/history", tags=["History"])
 
-@router.get("/", response_model=list[HistoryResponse])
+@router.get("/")
 def get_history(
-    period: Optional[str] = Query(None, description="Filtro de período: day, week, semester, year"),
+    limit: Optional[int] = Query(100, description="Número máximo de registros"),
     db: Session = Depends(get_db)
 ):
-    valid_periods = ["day", "week", "semester", "year"]
-    
-    if period is not None and period not in valid_periods:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Período inválido. Valores aceitos: {', '.join(valid_periods)}"
-        )
-    
-    # Query base
-    query = db.query(History)
-    
-    # Aplicar filtro de data se período foi especificado
-    if period:
-        now = datetime.now()
+    """
+    Obtém histórico de preços diretamente do Yahoo Finance.
+    Retorna dados dos últimos 30 dias com intervalo de 1 dia.
+    """
+    try:
+        # Buscar dados diretamente do Yahoo Finance
+        yf_client = get_yfinance_client()
         
-        if period == "day":
-            start_date = now - timedelta(days=1)
-        elif period == "week":
-            start_date = now - timedelta(weeks=1)
-        elif period == "semester":
-            start_date = now - timedelta(days=180)  # ~6 meses
-        elif period == "year":
-            start_date = now - timedelta(days=365)
+        # Usar período de 30 dias com intervalo de 1 dia
+        df = yf_client.get_history(period="30d", interval="1d")
         
-        query = query.filter(History.date >= start_date)
+        if df is None or df.empty:
+            return []
+        
+        # Converter DataFrame para lista de dicionários
+        df_reset = df.reset_index()
+        
+        # Limitar resultados
+        if len(df_reset) > limit:
+            df_reset = df_reset.tail(limit)
+        
+        # Formatar resposta
+        result = []
+        for idx, row in df_reset.iterrows():
+            result.append({
+                "id": int(idx) + 1,
+                "ticker": TICKER,
+                "date": row['Date'].isoformat() if hasattr(row['Date'], 'isoformat') else str(row['Date']),
+                "open": float(row['Open']),
+                "high": float(row['High']),
+                "low": float(row['Low']),
+                "close": float(row['Close']),
+                "volume": int(row['Volume'])
+            })
+        
+        return result
     
-    return query.all()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar histórico: {str(e)}")
+
 
 @router.post("/", response_model=HistoryResponse)
 def create_history(history: HistoryCreate, db: Session = Depends(get_db)):
+    """Cria um novo registro de histórico no banco de dados."""
     new_history = History(**history.dict())
     db.add(new_history)
     db.commit()
     db.refresh(new_history)
     return new_history
 
+
 @router.put("/{history_id}", response_model=HistoryResponse)
 def update_history(history_id: int, history_data: HistoryBase, db: Session = Depends(get_db)):
+    """Atualiza um registro de histórico existente."""
     history = db.query(History).filter(History.id == history_id).first()
     if not history:
         raise HTTPException(status_code=404, detail="Registro de histórico não encontrado")
@@ -70,8 +86,10 @@ def update_history(history_id: int, history_data: HistoryBase, db: Session = Dep
     db.refresh(history)
     return history
 
+
 @router.delete("/{history_id}")
 def delete_history(history_id: int, db: Session = Depends(get_db)):
+    """Deleta um registro de histórico."""
     history = db.query(History).filter(History.id == history_id).first()
     if not history:
         raise HTTPException(status_code=404, detail="Registro de histórico não encontrado")
