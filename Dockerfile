@@ -28,6 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Copiar código fonte
 COPY src/ ./src/
+COPY scripts/ ./scripts/
 
 # Criar usuário não-root
 RUN useradd -m -u 1000 appuser && \

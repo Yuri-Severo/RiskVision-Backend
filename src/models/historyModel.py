@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float
+from sqlalchemy import Column, Integer, String, DateTime, Float, Index, UniqueConstraint
 from sqlalchemy.sql import func
 from database import Base
+
 
 class History(Base):
     __tablename__ = "history"
@@ -16,3 +17,9 @@ class History(Base):
     stock_splits = Column(Float, nullable=False)
     date = Column(DateTime, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Índice composto para otimizar queries por ticker e data
+    __table_args__ = (
+        Index("idx_ticker_date", "ticker_name", "date"),
+        UniqueConstraint("ticker_name", "date", name="uq_ticker_date"),
+    )
