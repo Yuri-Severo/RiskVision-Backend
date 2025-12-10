@@ -13,9 +13,3 @@ argon2_cffi==21.3.0
 # Utilidades
 pydantic==2.8.2
 python-dotenv==1.0.1
-
-# SDK AWS
-boto3==1.35.24
-
-# Desenvolvimento e qualidade de código
-pylint==3.0.3
