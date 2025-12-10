@@ -3,11 +3,8 @@ from contextlib import asynccontextmanager
 from database import Base, engine
 from routers import (
     userRouter,
-    roleRouter,
-    historyRouter,
     authRouter,
     registerRouter,
-    stockRouter,
 )
 from scheduler.scheduler import start_scheduler, stop_scheduler, get_scheduler_status
 from config.settings import settings
@@ -49,10 +46,7 @@ app = FastAPI(title="Riskvision", version="1.0.0", lifespan=lifespan)
 # Routers
 app.include_router(authRouter.router)
 app.include_router(userRouter.router)
-app.include_router(roleRouter.router)
 app.include_router(registerRouter.router)
-app.include_router(historyRouter.router)
-app.include_router(stockRouter.router)
 
 
 @app.get("/health")
