@@ -24,3 +24,4 @@ tenacity>=8.2
 # Testing
 pytest>=7.4
 pytest-asyncio>=0.21
+httpx>=0.24  # Required for FastAPI TestClient
