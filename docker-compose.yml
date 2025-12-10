@@ -6,59 +6,29 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "3333:3333"
-    command:
-      [
-        "uvicorn",
-        "main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        "3333",
-        "--app-dir",
-        "src",
-      ]
+      - "8000:8000"
+    command: sh -c "python -m src.seeders.mock_data && uvicorn main:app --host 0.0.0.0 --port 8000 --app-dir src"
     environment:
       DATABASE_URL: ${DATABASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       JWT_SECRET: ${JWT_SECRET}
+      YF_PERIOD: ${YF_PERIOD:-7d}
+      YF_INTERVAL: ${YF_INTERVAL:-1m}
+      POLL_ENABLED: ${POLL_ENABLED:-true}
+      POLL_EVERY_SECONDS: ${POLL_EVERY_SECONDS:-60}
+      THROTTLE_SECONDS: ${THROTTLE_SECONDS:-1.0}
+      DEFAULT_FORECAST_HORIZON: ${DEFAULT_FORECAST_HORIZON:-1}
       PYTHONIOENCODING: utf-8
       LANG: C.UTF-8
       LC_ALL: C.UTF-8
     networks:
       - riskvision-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3333/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  frontend:
-    container_name: riskvision-web
-    build:
-      context: ../Frontend-RiskVision
-      dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "3000:3000"
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      # Se preferir, troque wget por curl se estiver disponível na imagem
-      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 25s
-    environment:
-      - API_URL=http://backend:3333
-      - NODE_ENV=development
-      - NEXT_PUBLIC_API_URL=http://backend:3333
-      - JWT_SECRET=${JWT_SECRET}
-    networks:
-      - riskvision-network
 
   portainer:
     image: portainer/portainer-ce
@@ -71,6 +41,32 @@ services:
       - portainer_data:/data
     networks:
       - riskvision-network
+
+  frontend:
+    container_name: riskvision-dashboard
+    build:
+      context: ./riskvision-frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      API_URL: http://host.docker.internal:8000
+      API_TIMEOUT: 30
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - riskvision-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8501/_stcore/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 volumes:
   portainer_data:

@@ -36,10 +36,10 @@ USER appuser
 
 # Healthcheck interno
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:3333/health || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 # Expor porta
-EXPOSE 3333
+EXPOSE 8000
 
 # Comando para iniciar a aplicação
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "3333", "--app-dir", "src", "--access-log"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "src", "--access-log"]
