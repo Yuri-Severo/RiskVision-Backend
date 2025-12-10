@@ -16,6 +16,160 @@ O sistema visa resolver o problema de **sobrecarga de informações** no mercado
 
 ---
 
+## Previsão Online com River (AAPL apenas)
+
+### 🚀 Nova Feature: Previsão de Preços em Tempo Real
+
+Este sistema agora inclui um serviço de **previsão de preços em tempo real** usando **Online Machine Learning** com a biblioteca **River** e dados da **Apple (AAPL)** obtidos via **yfinance**.
+
+#### ⚠️ Limitações Importantes
+
+- **Ticker fixo**: O sistema opera **exclusivamente com a ação da Apple (AAPL)**. Não há suporte para outros tickers nesta versão.
+- **Estado em memória**: O modelo é mantido em memória e não persiste em banco de dados. Recomenda-se executar com `--workers 1` para consistência.
+- **Não constitui recomendação de investimento**: Este sistema é apenas para fins educacionais e de demonstração. Não deve ser usado como base para decisões de investimento.
+
+#### 📊 Funcionalidades
+
+1. **Modelo Incremental (SNARIMAX)**: Utiliza River para aprendizado online, atualizando-se continuamente com novos dados.
+2. **Dados em Tempo Real**: Integração com yfinance para obter cotações atualizadas.
+3. **Warm-start Automático**: O modelo é inicializado automaticamente com dados históricos na primeira requisição.
+4. **Atualização em Background**: Poller opcional que busca novos preços periodicamente e atualiza o modelo.
+5. **API RESTful**: Endpoints para obter previsões, forçar retreinamento e verificar status do modelo.
+
+#### 🔧 Variáveis de Ambiente
+
+Adicione as seguintes variáveis ao seu arquivo `.env`:
+
+```ini
+# Configuração de dados do yfinance
+YF_PERIOD=7d              # Período histórico (max 7d para interval=1m)
+YF_INTERVAL=1m            # Intervalo dos dados (1m, 5m, 1h, 1d, etc.)
+
+# Configuração do poller de background
+POLL_ENABLED=true         # Habilita atualização automática
+POLL_EVERY_SECONDS=60     # Intervalo entre atualizações (segundos)
+
+# Configuração de throttling
+THROTTLE_SECONDS=1.0      # Delay entre chamadas à API do yfinance
+
+# Configuração do modelo
+DEFAULT_FORECAST_HORIZON=1  # Horizonte padrão de previsão
+```
+
+#### 📡 Endpoints da API
+
+##### 1. Obter Previsão
+```bash
+GET /forecast?horizon=5
+```
+
+Retorna previsões de preço para AAPL.
+
+**Parâmetros:**
+- `horizon` (opcional): Número de períodos à frente para prever (padrão: 1, máximo: 100)
+- `aapl_only` (opcional): Parâmetro de reconhecimento (ignorado, sempre AAPL)
+
+**Exemplo de resposta:**
+```json
+{
+  "ticker": "AAPL",
+  "horizon": 5,
+  "last_price": 178.50,
+  "forecast": [178.55, 178.60, 178.65, 178.70, 178.75],
+  "as_of": "2024-12-10T10:30:00.123456"
+}
+```
+
+**Exemplo de uso:**
+```bash
+curl 'http://localhost:8000/forecast?horizon=5'
+```
+
+##### 2. Forçar Treinamento
+```bash
+POST /forecast/train
+```
+
+Força o modelo a recarregar dados históricos e retreinar do zero.
+
+**Exemplo de resposta:**
+```json
+{
+  "status": "success",
+  "message": "Model warm-started with 420 samples",
+  "ticker": "AAPL",
+  "samples": 420,
+  "last_price": 178.50
+}
+```
+
+**Exemplo de uso:**
+```bash
+curl -X POST 'http://localhost:8000/forecast/train'
+```
+
+##### 3. Verificar Status do Modelo
+```bash
+GET /forecast/health
+```
+
+Retorna o status atual do modelo de previsão.
+
+**Exemplo de resposta:**
+```json
+{
+  "ticker": "AAPL",
+  "model_initialized": true,
+  "samples_trained": 420,
+  "last_price": 178.50,
+  "last_timestamp": "2024-12-10T10:30:00.123456",
+  "ready_for_forecast": true
+}
+```
+
+**Exemplo de uso:**
+```bash
+curl 'http://localhost:8000/forecast/health'
+```
+
+#### 🚦 Como Executar com Previsão
+
+**Importante**: Execute com apenas **1 worker** para manter o estado do modelo consistente:
+
+```bash
+# Instalação de dependências
+pip install -r requirements.txt
+
+# Executar em modo desenvolvimento
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1 --reload
+
+# Executar em produção
+uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 1
+```
+
+#### 🧪 Executar Testes
+
+```bash
+# Executar todos os testes
+pytest tests/ -v
+
+# Executar apenas testes do serviço de previsão
+pytest tests/test_river_service.py -v
+```
+
+#### 📝 Notas Técnicas
+
+- **Intervalo de 1 minuto**: O yfinance limita dados de 1 minuto a um período máximo de 7 dias.
+- **Retry automático**: O cliente yfinance implementa retry exponencial (3 tentativas) em caso de falhas.
+- **Throttling**: Há um delay configurável entre chamadas sucessivas à API do yfinance para evitar rate limiting.
+- **Modelo SNARIMAX**: Modelo de séries temporais com componentes autorregressivos, diferenciação e média móvel, incluindo sazonalidade.
+
+#### ⚠️ Aviso Legal
+
+**Este sistema é fornecido apenas para fins educacionais e de demonstração. As previsões geradas não constituem recomendação de investimento. Investimentos em ações envolvem riscos, incluindo a perda do capital investido. Sempre consulte um profissional financeiro qualificado antes de tomar decisões de investimento.**
+
+---
+
 ## Repositórios
 
 O projeto **RiskVision** é dividido em três repositórios:
