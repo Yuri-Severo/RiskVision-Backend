@@ -51,16 +51,12 @@ def get_forecast(
         ge=1,
         le=100,
         description="Number of time steps to forecast (1-100)"
-    ),
-    aapl_only: Optional[bool] = Query(
-        default=True,
-        description="Parameter to acknowledge AAPL-only operation (ignored)"
     )
 ):
     """
     Get price forecast for AAPL stock.
     
-    This endpoint always operates on AAPL ticker, regardless of any parameters.
+    This endpoint always operates on AAPL ticker only.
     The model is automatically warm-started on first use.
     
     Returns:

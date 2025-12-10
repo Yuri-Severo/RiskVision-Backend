@@ -28,11 +28,12 @@ class RiverManager:
     def _initialize_model(self):
         """Initialize the SNARIMAX model"""
         # Using SNARIMAX with reasonable defaults for financial time series
+        # For 1-minute interval data, m=60 represents hourly seasonality
         self.model = time_series.SNARIMAX(
             p=1,  # AR order
             d=1,  # Differencing order
             q=1,  # MA order
-            m=12, # Seasonality period (12 for hourly patterns in a day if using 5min data)
+            m=60, # Seasonality period (60 minutes = 1 hour for 1-minute data)
             sp=1, # Seasonal AR order
             sq=1, # Seasonal MA order
         )
@@ -123,17 +124,13 @@ class RiverManager:
             return []
         
         try:
-            forecasts = []
-            for _ in range(horizon):
-                # Forecast next value
-                pred = self.model.forecast(horizon=1)
-                if pred and len(pred) > 0:
-                    forecasts.append(float(pred[0]))
-                else:
-                    # If forecast fails, return what we have
-                    break
+            # Use River's built-in multi-step forecasting
+            forecasts = self.model.forecast(horizon=horizon)
             
-            return forecasts
+            # Convert to list of floats
+            if forecasts:
+                return [float(f) for f in forecasts]
+            return []
             
         except Exception:
             # If forecasting fails, return empty list
