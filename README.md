@@ -4,6 +4,24 @@
 
 **RiskVision** é um sistema de análise de mercado financeiro que utiliza **Inteligência Artificial (IA)** para processar notícias financeiras e gerar insights para investidores e analistas. O sistema classifica o sentimento (positivo, negativo ou neutro) e avalia o nível de risco (alto, médio ou baixo) das notícias, fornecendo atualizações em tempo real por meio de uma **API** e de um **dashboard interativo**.
 
+## 📊 RiskVision Dashboard
+
+Este projeto agora inclui um **dashboard interativo em Streamlit** para visualização de previsões de preços!
+
+### Acesso Rápido
+- **Dashboard:** http://localhost:8501
+- **API:** http://localhost:8000
+- **Documentação do Dashboard:** [riskvision-frontend/README.md](riskvision-frontend/README.md)
+
+### Executar com Docker Compose
+```bash
+docker-compose up -d
+```
+
+Veja a [documentação completa do dashboard](riskvision-frontend/) para mais informações.
+
+---
+
 ### Objetivos do projeto:
 
 1. **Coletar e processar notícias** em tempo real.
