@@ -54,11 +54,24 @@ def calculate_moving_average(prices: List[float], window: int) -> List[float]:
 
 def parse_prediction_response(response: Dict[str, Any]) -> pd.DataFrame:
     """Converte resposta de previsão em DataFrame"""
-    predictions = response.get('predictions', [])
+    # Backend retorna 'forecast' (lista de preços) não 'predictions'
+    forecast = response.get('forecast', [])
     
-    df = pd.DataFrame(predictions)
-    if not df.empty:
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+    if not forecast:
+        return pd.DataFrame()
+    
+    # Criar DataFrame com índice como timestamp relativo
+    df = pd.DataFrame({
+        'price': forecast,
+        'step': list(range(1, len(forecast) + 1))
+    })
+    
+    # Adicionar timestamp baseado no as_of
+    as_of = response.get('as_of')
+    if as_of:
+        base_time = pd.to_datetime(as_of)
+        # Assumindo que cada step é 1 minuto
+        df['timestamp'] = [base_time + pd.Timedelta(minutes=i) for i in range(len(forecast))]
     
     return df
 

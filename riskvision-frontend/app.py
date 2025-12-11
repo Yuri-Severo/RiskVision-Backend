@@ -3,6 +3,7 @@ RiskVision Dashboard - Aplicação Principal
 Dashboard interativo para visualização de previsões de preços de ações
 """
 import streamlit as st
+import pandas as pd
 from streamlit_autorefresh import st_autorefresh
 from datetime import datetime
 
@@ -173,7 +174,9 @@ if st.session_state.last_forecast:
     forecast_data = st.session_state.last_forecast
     ticker = forecast_data.get('ticker', 'AAPL')
     predictions_df = parse_prediction_response(forecast_data)
-    model_info = forecast_data.get('model_info', {})
+    last_price = forecast_data.get('last_price')
+    horizon = forecast_data.get('horizon')
+    as_of = forecast_data.get('as_of')
     
     st.markdown("---")
     st.markdown("## 📈 Resultado da Previsão")
@@ -208,9 +211,13 @@ if st.session_state.last_forecast:
         
         with col_m4:
             st.metric(
-                "Versão do Modelo",
-                model_info.get('version', 'N/A')
+                "Horizonte",
+                f"{horizon} steps" if horizon else "N/A"
             )
+        
+        # Informações adicionais
+        if last_price and as_of:
+            st.info(f"💡 **Último preço real observado:** ${last_price:.2f} | **Gerado em:** {pd.to_datetime(as_of).strftime('%d/%m/%Y %H:%M:%S')}")
     
     # Gráfico de previsão
     st.markdown("### 📊 Visualização")
@@ -229,17 +236,12 @@ if st.session_state.last_forecast:
     
     if not predictions_df.empty:
         # Formata dataframe para exibição
-        display_df = predictions_df.copy()
+        display_df = predictions_df[['timestamp', 'price', 'step']].copy()
         display_df['timestamp'] = display_df['timestamp'].dt.strftime('%d/%m/%Y %H:%M:%S')
         display_df['price'] = display_df['price'].apply(lambda x: f"${x:.2f}")
         
-        if 'confidence_lower' in display_df.columns:
-            display_df['confidence_lower'] = display_df['confidence_lower'].apply(lambda x: f"${x:.2f}")
-        if 'confidence_upper' in display_df.columns:
-            display_df['confidence_upper'] = display_df['confidence_upper'].apply(lambda x: f"${x:.2f}")
-        
-        # Renomeia colunas
-        display_df.columns = ['Timestamp', 'Preço', 'Limite Inferior', 'Limite Superior']
+        # Renomeia colunas (apenas as 3 que existem)
+        display_df.columns = ['Timestamp', 'Preço', 'Step']
         
         st.dataframe(
             display_df,
@@ -257,21 +259,21 @@ if st.session_state.last_forecast:
         )
     
     # Informações do modelo
-    with st.expander("ℹ️ Informações do Modelo"):
+    with st.expander("ℹ️ Informações da Previsão"):
         col_i1, col_i2, col_i3 = st.columns(3)
         
         with col_i1:
-            st.markdown(f"**Versão:** {model_info.get('version', 'N/A')}")
+            st.markdown(f"**Ticker:** {ticker}")
         
         with col_i2:
-            last_updated = model_info.get('last_updated', 'N/A')
-            if last_updated != 'N/A':
-                last_updated = format_datetime(last_updated)
-            st.markdown(f"**Última Atualização:** {last_updated}")
+            if as_of:
+                formatted_time = pd.to_datetime(as_of).strftime('%d/%m/%Y %H:%M:%S')
+                st.markdown(f"**Gerado em:** {formatted_time}")
+            else:
+                st.markdown(f"**Gerado em:** N/A")
         
         with col_i3:
-            training_samples = model_info.get('training_samples', 'N/A')
-            st.markdown(f"**Amostras de Treino:** {training_samples}")
+            st.markdown(f"**Último Preço Real:** ${last_price:.2f}" if last_price else "**Último Preço Real:** N/A")
 
 else:
     st.info("👆 Clique em 'Gerar Previsão' para começar")

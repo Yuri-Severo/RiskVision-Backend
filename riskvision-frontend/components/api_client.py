@@ -95,9 +95,9 @@ class RiskVisionAPI:
             Dicionário com previsões e informações do modelo
         """
         try:
-            response = requests.post(
-                f'{self.base_url}/forecast',
-                json={'horizon': horizon},
+            response = requests.get(
+                f'{self.base_url}/forecast/',
+                params={'horizon': horizon},
                 headers=self._get_headers(),
                 timeout=self.timeout
             )
